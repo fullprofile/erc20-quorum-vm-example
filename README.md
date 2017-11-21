@@ -1,26 +1,18 @@
-# ERC-20 Token Standard REST services on Quorum
+# 3 node Quorum environment
 
 ## Introduction
 
-This sample environment provides RESTful services for creating and managing
-[ERC-20 tokens](https://github.com/ethereum/EIPs/issues/20) on top of 
-[Quorum](https://github.com/jpmorganchase/quorum). 
+This sample environment provides a 3 node Quorum environment deployed onto a Ubuntu virtual machine on Microsoft Azure.
 
-It provides a 3 node Quorum environment and RESTful service endpoints for 
-interacting with each of those nodes over HTTP. These services are provided 
-via the [erc20-rest-service](https://github.com/blk-io/erc20-rest-service)
-which uses [web3j](https://web3j.io) and 
-[Spring Boot](https://projects.spring.io/spring-boot/).
-
-Full transaction privacy is supported.
+Full transaction privacy between nodes is supported.
 
 
 ## Usage
 
-If you're using the [Azure VM Image](), this will configure and start both the Quorum network and the ERC-20 services:
+If you're using the [Azure VM Image](), this will configure and start both the Quorum network:
 
 ```bash
-cd ~/erc20-quorum-vm-example
+cd ~/quorum-vm-template
 ./init.sh
 ```
 
@@ -28,8 +20,8 @@ Alternatively, if you have an fresh Ubuntu host (username must be *ubuntu*):
 
 ```bash
 cd $HOME
-git clone https://github.com/blk-io/erc20-quorum-vm-example.git
-cd erc20-quorum-vm-example
+git clone https://github.com/fullprofile/quorum-vm-template.git
+cd quorum-vm-template
 sudo ./bootstrap.sh
 ./init.sh
 ```
@@ -37,12 +29,11 @@ sudo ./bootstrap.sh
 You will be able to access the following endpoints for interacting with 
 the network (please substitute hostnames for your own):
 
-* http://blk-io-erc20-quorum.australiaeast.cloudapp.azure.com:8080/swagger-ui.html
-* http://blk-io-erc20-quorum.australiaeast.cloudapp.azure.com:8081/swagger-ui.html
-* http://blk-io-erc20-quorum.australiaeast.cloudapp.azure.com:8082/swagger-ui.html
+* http://quorum-poc.australiaeast.cloudapp.azure.com:8080/swagger-ui.html
+* http://quorum-poc.australiaeast.cloudapp.azure.com:8081/swagger-ui.html
+* http://quorum-poc.australiaeast.cloudapp.azure.com:8082/swagger-ui.html
 
-Should you wish to manage the individual environments, you can use 
-the following scripts.
+Should you wish to manage the individual environments, you can use the following scripts.
 
 Quorum:
 
@@ -53,41 +44,19 @@ cd ~/3nodes-quorum
 ./stop.sh
 ```
 
-REST services:
-
-```bash
-cd ~/3nodes-service
-./service-start.sh
-# or
-./service-stop.sh
-```
-
-
 ## Quorum node configuration
 
-To facilitate the sending of private transactions between any 
-combination of nodes, a dedicated REST service runs associated with each 
-node.
+To facilitate the sending of private transactions between any combination of nodes.
 
-| Node | Address                                    | Enclave Key                                  | Quorum Node Port | REST Service Port |
-|------|--------------------------------------------|----------------------------------------------|------------------|-------------------|
-| 1    | 0xed9d02e382b34818e88b88a309c7fe71e65f419d | BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo= | 22000            | 8080              |
-| 2    | 0xca843569e3427144cead5e4d5999a3d0ccf92b8e | QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc= | 22001            | 8081              |
-| 3    | 0x0fbdc686b912d7722dc86510934589e0aaf3b55a | 1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg= | 22002            | 8082              |
+| Node | Address                                    | Enclave Key                                  | Quorum Node Port | Raft Port |
+|------|--------------------------------------------|----------------------------------------------|------------------|-----------|
+| 1    | 0xed9d02e382b34818e88b88a309c7fe71e65f419d | BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo= | 22000            | 50401     |
+| 2    | 0xca843569e3427144cead5e4d5999a3d0ccf92b8e | QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc= | 22001            | 50402     |
+| 3    | 0x0fbdc686b912d7722dc86510934589e0aaf3b55a | 1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg= | 22002            | 50403     |
 
-The *privateFor* HTTP request header should be used for specifying the
-nodes that a transaction is private between parties. Swagger provides 
-support for specifying this field in addition to the request body 
-attributes.
-
+The *privateFor* HTTP request header should be used for specifying the nodes that a transaction is private between parties.
 
 ## Azure VM
-
-An Azure VM is available at **<insert link here>** with this environment 
-pre-configured.
-
-It is recommended that you use this to run this example.
-
 
 ## Azure VM setup
 
@@ -108,10 +77,10 @@ Login to Azure:
 ```bash
 az login
 ```
-Create a resource group (use `az account list-locations` to see avilable locations):
+Create a resource group (use `az account list-locations` to see available locations):
 
 ```bash
-az group create -n "erc20-quorum-group" -l australiaeast
+az group create -n "Quorum-PoC" -l australiaeast
 ```
 
 Create ssh keys:
@@ -120,28 +89,21 @@ Create ssh keys:
 ssh-keygen -t rsa -b 2048 
 ```
 
+You can specify a different filename to save the key. eg `~/.ssh/azure_rsa`
+
 Create an Azure VM:
 
 ```bash
-az vm create -n erc20-quorum-vm -g erc20-quorum-group --image UbuntuLTS --size Standard_DS1_v2 --public-ip-address-dns-name erc20-quorum --admin-username ubuntu --ssh-key-value ~/.ssh/azure_rsa.pub
-```
-
-Open ports for Swagger UI:
-
-```bash
-az vm open-port --port 8080 --resource-group erc20-quorum-group --name erc20-quorum-vm --priority 900
-az vm open-port --port 8081 --resource-group erc20-quorum-group --name erc20-quorum-vm --priority 901
-az vm open-port --port 8082 --resource-group erc20-quorum-group --name erc20-quorum-vm --priority 902
+az vm create -n quorum-poc-vm -g Quorum-PoC --image UbuntuLTS --size Standard_DS1_v2 --public-ip-address-dns-name quorum-poc --admin-username ubuntu --ssh-key-value ~/.ssh/azure_rsa.pub
 ```
 
 *Note:* Operation may report failure, but in fact succeed
 
-
 ## VM installation
 
 ```bash
-git clone https://github.com/blk-io/erc20-quorum-vm-example.git
-cd erc20-quorum-vm-example
+git clone https://github.com/fullprofile/quorum-vm-template.git
+cd quorum-vm-template
 sudo ./bootstrap.sh
 ```
 
